@@ -1,0 +1,439 @@
+/* ============================================================
+   便签墙 · 外观
+   磨砂玻璃的透明度、模糊程度、便签大小都在最上面的变量里调。
+   ============================================================ */
+:root {
+  --ink: #f4f4f6;
+  --ink-soft: rgba(244, 244, 246, 0.62);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* 【改这里】便签玻璃有多"实"：0.84 比 start-page 的 0.55 更不透明，
+     便签颜色不会被背后的光斑染得太黄。想要更透就往下调（比如 0.70）。 */
+  --note-alpha: 0.84;
+  --note-blur: 18px;
+  --note-radius: 18px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: #08090f;
+  overflow: hidden;
+  min-height: 100dvh;
+}
+
+/* ---------- 1. 背景：深色底 + 三团光斑 ---------- */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 15% 0%, #151a2e 0%, transparent 60%),
+    radial-gradient(90% 90% at 100% 100%, #1b1430 0%, transparent 55%),
+    #08090f;
+}
+
+.glow {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.30;
+  will-change: transform;
+  animation: drift 28s ease-in-out infinite alternate;
+}
+.g1 { top: -18vmax; left: -10vmax; background: #ffcf5c; }
+.g2 { right: -14vmax; bottom: -20vmax; background: #8f6bff; animation-delay: -9s; }
+.g3 { left: 38%; bottom: -26vmax; background: #3f9fff; animation-delay: -17s; }
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(6vmax, -4vmax, 0) scale(1.12); }
+}
+
+/* ---------- 2. 磨砂玻璃 ---------- */
+.glass {
+  background: rgba(14, 15, 22, 0.62);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+          backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- 3. 顶部工具栏 ---------- */
+.topbar {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  z-index: 100;
+  width: min(1120px, calc(100vw - 36px));
+  padding: 14px 18px 14px 22px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  transform: translateX(-50%);
+}
+
+.brand h1 {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+.brand p {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+
+/* 新建便签用的一排颜色 */
+.new-colors {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.new-dot {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.18s var(--ease), border-color 0.18s;
+}
+.new-dot:hover { transform: scale(1.16); }
+.new-dot.active { border-color: #fff; }
+.new-dot:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.btn {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), background 0.2s, border-color 0.2s;
+}
+.btn:active { transform: scale(0.96); }
+.btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.btn.primary {
+  color: #101018;
+  background: #f4f4f6;
+  border: 1px solid #f4f4f6;
+}
+.btn.primary:hover { background: #fff; }
+
+.btn.ghost {
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.btn.ghost:hover { background: rgba(255, 255, 255, 0.08); color: var(--ink); }
+
+/* ---------- 4. 便签墙 ---------- */
+.wall {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.empty {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.50);
+  pointer-events: none;
+  user-select: none;
+}
+.empty span {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.32);
+}
+.empty[hidden] { display: none; }
+
+/* ---------- 5. 便签 ---------- */
+.note {
+  --note-rgb: 255, 214, 102;
+  --note-ink: #1b1b22;
+
+  position: fixed;
+  z-index: 10;
+  width: 280px;
+  min-height: 216px;
+  display: flex;
+  flex-direction: column;
+
+  /* 磨砂玻璃：颜色的透明度由 --note-alpha 控制 */
+  background: rgba(var(--note-rgb), var(--note-alpha));
+  -webkit-backdrop-filter: blur(var(--note-blur)) saturate(120%);
+          backdrop-filter: blur(var(--note-blur)) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  border-radius: var(--note-radius);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  color: var(--note-ink);
+
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  isolation: isolate;             /* 让下面的白色光晕只叠在便签内部 */
+  will-change: transform;
+  /* 只过渡颜色和阴影，不要过渡 transform，否则拖动会"追"鼠标 */
+  transition: box-shadow 0.3s var(--ease), background 0.35s var(--ease), border-color 0.3s;
+  animation: note-in 0.32s var(--ease) both;
+}
+
+@keyframes note-in {
+  from { opacity: 0; scale: 0.92; }
+  to   { opacity: 1; scale: 1; }
+}
+
+/* 鼠标划过时的白色光晕。位置由 JS 写进 --mx / --my，光晕跟着鼠标走 */
+.note::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;                     /* 背景之上、文字之下 */
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(255, 255, 255, 0.38), transparent 66%);
+  opacity: 0;
+  transition: opacity 0.28s var(--ease);
+}
+.note:hover::after,
+.note.dragging::after,
+.note.gliding::after { opacity: 1; }
+
+/* 删除：淡出 + 缩小 + 往下沉一点 */
+.note.removing {
+  pointer-events: none;
+  animation: note-out 0.30s var(--ease) forwards;
+}
+.note.removing::after { opacity: 0; }
+
+@keyframes note-out {
+  from { opacity: 1; scale: 1; translate: 0 0; }
+  to   { opacity: 0; scale: 0.84; translate: 0 12px; }
+}
+
+/* 拖动中 / 松手滑行中。和 start-page 的窗口手感一致 */
+.note.dragging {
+  cursor: grabbing;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  border-color: rgba(255, 255, 255, 0.46);
+}
+.note.gliding {
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.note-head {
+  position: relative;
+  z-index: 1;                     /* 盖在白色光晕上面 */
+  flex: none;
+  height: 40px;
+  padding: 10px 10px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+}
+
+.grip {
+  width: 34px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.22;
+}
+
+.note-actions { display: flex; gap: 4px; }
+
+.note-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.note-btn:hover { background: rgba(255, 255, 255, 0.40); }
+.note-btn:active { transform: scale(0.9); }
+.note-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+.color-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgb(var(--note-rgb));
+  transition: background 0.3s;
+}
+
+.del {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.note-text {
+  position: relative;
+  z-index: 1;                     /* 盖在白色光晕上面 */
+  flex: 1;
+  width: 100%;
+  min-height: 140px;
+  padding: 6px 16px 16px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+  cursor: text;
+  user-select: text;
+  touch-action: auto;             /* 触屏上可以正常滚动长文本 */
+  border-radius: 0 0 var(--note-radius) var(--note-radius);
+}
+.note-text::-webkit-scrollbar { width: 6px; }
+.note-text::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 99px;
+}
+.note-text::placeholder { color: currentColor; opacity: 0.40; }
+
+/* ---------- 6. 每张便签自己的调色板 ---------- */
+.swatches {
+  position: absolute;
+  top: 46px;
+  right: 10px;
+  z-index: 5;
+  width: 216px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  border-radius: 16px;
+
+  color: var(--ink);
+  background: rgba(18, 19, 26, 0.86);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+          backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
+
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 -6px;
+  transition: opacity 0.2s var(--ease), translate 0.2s var(--ease), visibility 0s 0.2s;
+}
+.note.palette-open .swatches {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  transition-delay: 0s;
+}
+
+.swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+  transition: transform 0.15s var(--ease), border-color 0.15s;
+}
+.swatch:hover { transform: scale(1.12); border-color: #fff; }
+.swatch.current { outline: 2px solid #fff; outline-offset: 2px; }
+.swatch:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.custom-color {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.custom-color input[type="color"] {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.custom-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.custom-color input[type="color"]::-webkit-color-swatch {
+  border: 2px solid rgba(255, 255, 255, 0.40);
+  border-radius: 50%;
+}
+
+/* ---------- 7. 页脚署名 ---------- */
+.credit {
+  position: fixed;
+  left: 50%;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;                     /* 比便签（10 起）低，便签拖过来会盖住它 */
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(244, 244, 246, 0.34);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* ---------- 8. 窄屏 ---------- */
+@media (max-width: 720px) {
+  .topbar {
+    top: 10px;
+    width: calc(100vw - 20px);
+    padding: 12px 12px 12px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .brand p { display: none; }
+  .new-colors { display: none; }      /* 手机上颜色在每张便签里改 */
+  .note { width: 250px; min-height: 200px; }
+  .btn { padding: 8px 12px; }
+}
+
+/* ---------- 9. 系统开了"减少动画"时 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

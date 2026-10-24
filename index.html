@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>便签墙</title>
+
+<!-- 字体和 start-page 用同一套，加载不到就用系统黑体，不会坏 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- media="print" + onload：字体不阻塞页面显示；网络慢时先用系统字体，加载完再换 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <!-- 背景：深色渐变 + 几团模糊光斑。便签的磨砂玻璃就是把这些光斑"糊"开 -->
+  <div class="bg" aria-hidden="true">
+    <span class="glow g1"></span>
+    <span class="glow g2"></span>
+    <span class="glow g3"></span>
+  </div>
+
+  <!-- ===== 顶部工具栏 ===== -->
+  <header class="topbar glass">
+    <div class="brand">
+      <h1>便签墙</h1>
+      <p>拖动便签 · 双击空白处新建 · 自动保存</p>
+    </div>
+
+    <div class="tools">
+      <!-- 新建便签时用的颜色。点一个圆点就换一种 -->
+      <div class="new-colors" id="new-colors" role="group" aria-label="新便签的颜色"></div>
+      <button type="button" class="btn primary" id="add-note">＋ 新建便签</button>
+      <button type="button" class="btn ghost" id="clear-all">清空</button>
+    </div>
+  </header>
+
+  <!-- ===== 便签墙本体 ===== -->
+  <main class="wall" id="wall">
+    <p class="empty" id="empty">
+      还没有便签<br>
+      <span>点“新建便签”，或者双击这片空白</span>
+    </p>
+  </main>
+
+  <footer class="credit">Made with DeepSeek</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
